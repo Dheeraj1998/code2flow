@@ -1,4 +1,3 @@
-import logging
 import re
 
 FUNCTION_DEFINITION = 'function_definition'
@@ -7,9 +6,6 @@ ELIF_CONDITION = 'elif_condition'
 ELSE_CONDITION = 'else_condition'
 ASSIGNMENT_CODE = 'assignment_code'
 GENERTIC_CODE = 'generic_code'
-
-logging.basicConfig(level = logging.INFO)
-code_content = ['def main():', '    print("Hello world!")', '    variableValue = 10', '    if(variableValue < 5):', '        print("variableValue is less than 5.")', '    else:', '        print("variableValue is greater than 5.")', 'main()']
 
 def check_indentation(code_line):
     return len(code_line) - len(code_line.lstrip())
@@ -40,17 +36,23 @@ def parse_code(code_content):
         line_type = determine_line_type(code_line)
         indentation_level = check_indentation(code_line)
         stripped_code_line = code_line.strip()
-        print(code_line, line_type, indentation_level)
-        if (determine_line_type == FUNCTION_DEFINITION):
+
+        # Creating an empty array code block corresponding to the function name
+        if (line_type == FUNCTION_DEFINITION):
             indentation_level_stack.append(indentation_level)
-            current_function_stack.append(code_line)
+            current_function_stack.append(stripped_code_line)
             function_codes[code_line] = []
         else:
+            # Adding to the global code flow when there is no indentation in the code
             if len(indentation_level_stack) == 0:
                 global_code_flow.append(stripped_code_line)
-            elif indentation_level > current_function_stack[len(current_function_stack) - 1]:
-                function_codes[current_function_stack[len(current_function_stack) - 1]].append(code_line)
+            # Adding to the specific code flow the indentation is greater than the top of stack
+            elif indentation_level > indentation_level_stack[len(indentation_level_stack) - 1]:
+                function_codes[current_function_stack[len(current_function_stack) - 1]].append([{"code_type": line_type, "indentation_level": indentation_level, "code_line": stripped_code_line}])
+            # Removing the top elements of the stacks and adding the code to the global code flow
+            else:
+                indentation_level_stack.pop()
+                current_function_stack.pop()
+                global_code_flow.append(stripped_code_line)
 
-    print(function_codes)
-
-parse_code(code_content)
+    return global_code_flow, function_codes

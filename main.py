@@ -2,12 +2,11 @@ import logging
 logging.basicConfig(level = logging.INFO)
 
 from code_parser import parse_code
-from graphviz import Digraph
 
 def main():
-    file_name = "sample_code.py"
+    file_name = "sample_codes/example_3.py"
     file_object = open(file_name, 'r')
-    logging.info("The file %s was opened and successfully read.", file_name)
+    logging.info("The file '%s' was opened and successfully read.", file_name)
 
     file_contents = []
 
@@ -18,6 +17,8 @@ def main():
         # Removing any blank lines in the source code
         if len(file_line.strip()) != 0:
             file_contents.append(file_line.rstrip())
-    parse_code(file_contents)
+    global_code_flow, function_codes = parse_code(file_contents)
+    print(global_code_flow)
+    print(function_codes)
 
 main()
