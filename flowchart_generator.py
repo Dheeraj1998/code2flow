@@ -35,7 +35,7 @@ def generate(function_codes):
         # This stack stores the UUID required for the alternate connection to a node from a branching node
         branching_node_uuid_stack = []
         # This stack stores all the ending nodes so that they could be connected to the un-intended nodes (outer code)
-        ending_node_stack = []
+        ending_node_uuid_stack = []
         previous_code_line = ''
         previous_code_type = ''
         previous_indentation_level = 0
@@ -47,6 +47,10 @@ def generate(function_codes):
             current_indentation_level = code_block_dictionary['indentation_level']
             current_code_line = code_block_dictionary['code_line']
 
+             # Adding the last code lines of each intended block
+            if current_indentation_level < previous_indentation_level:
+                ending_node_uuid_stack.append(previous_block_uuid)
+
             # Handling the cases where the flow would need to branch out (initial branch)
             if (current_code_type in [IF_CONDITION]):
                 function_dot_code.node(generated_uuid_values[used_uuid_count], IF_CONDITION_NODE_LABEL)
@@ -54,6 +58,8 @@ def generate(function_codes):
                 indentation_level_stack.append(current_indentation_level)
                 code_line_stack.append(current_code_line)
                 branching_node_uuid_stack.append(generated_uuid_values[used_uuid_count])
+                # This node needs to be appened in cases where there isn't a terminating condition
+                ending_node_uuid_stack.append(generated_uuid_values[used_uuid_count])
 
                 # Handling the first node of the flow
                 if used_uuid_count != 0:
@@ -71,13 +77,17 @@ def generate(function_codes):
                     # Handling the first edge after a special code line (start of indentation)
                     if len(code_line_stack) != 0:
                         function_dot_code.edge(branching_node_uuid_stack[len(branching_node_uuid_stack) - 1], generated_uuid_values[used_uuid_count], label = code_line_stack.pop(), style = 'dashed')
-                        if previous_code_type == ELSE_CONDITION:
-                            print(current_code_line)
+                        # if previous_code_type == ELSE_CONDITION:
+                            # print(current_code_line)
                     else:
                         # Handling the first code line after code block (for alternate branching)
                         if current_indentation_level < previous_indentation_level:
+                            # Removing the previous branching node as the code block is complete
                             branching_node_uuid_stack.pop()
-                            #function_dot_code.edge(branching_node_uuid_stack.pop(), generated_uuid_values[used_uuid_count], style = 'dashed')
+                            print(current_code_line, ending_node_uuid_stack)
+                            total_required_edges = len(ending_node_uuid_stack)
+                            for interation in range(total_required_edges):
+                                function_dot_code.edge(ending_node_uuid_stack.pop(), generated_uuid_values[used_uuid_count], style = 'dashed')
                         else:
                             function_dot_code.edge(previous_block_uuid, generated_uuid_values[used_uuid_count])
                 previous_block_uuid = generated_uuid_values[used_uuid_count]
