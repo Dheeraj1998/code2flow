@@ -2,9 +2,10 @@ import logging
 logging.basicConfig(level = logging.INFO)
 
 from code_parser import parse_code
+from flowchart_generator import generate
 
 def main():
-    file_name = "sample_codes/example_3.py"
+    file_name = "sample_codes/example_2.py"
     file_object = open(file_name, 'r')
     logging.info("The file '%s' was opened and successfully read.", file_name)
 
@@ -18,7 +19,9 @@ def main():
         if len(file_line.strip()) != 0:
             file_contents.append(file_line.rstrip())
     global_code_flow, function_codes = parse_code(file_contents)
-    print(global_code_flow)
-    print(function_codes)
+    function_dot_codes = generate(function_codes)
+
+    for function_name in function_dot_codes:
+        print(function_dot_codes[function_name])
 
 main()

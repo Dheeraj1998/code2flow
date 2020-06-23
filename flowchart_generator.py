@@ -6,9 +6,11 @@ from string import digits
 import re
 import uuid
 
-IF_CONDITION_NODE_LABEL = 'Conditional node'
+STARTING_CONDITIONAL_STATEMENTS = [IF_CONDITION]
+INTERMEDIATE_CONDITIONAL_STATEMENTS = [ELIF_CONDITION]
+TERMINATING_CONDITIONAL_STATEMENTS = [ELSE_CONDITION]
 
-function_codes = {'def main():': [[{'code_type': 'generic_code', 'indentation_level': 4, 'code_line': 'print("Hello world!")'}], [{'code_type': 'assignment_code', 'indentation_level': 4, 'code_line': 'variableValue = 10'}], [{'code_type': 'if_condition', 'indentation_level': 4, 'code_line': 'if(variableValue < 5):'}], [{'code_type': 'generic_code', 'indentation_level': 8, 'code_line': 'print("Level 1.0 of loop.")'}], [{'code_type': 'if_condition', 'indentation_level': 8, 'code_line': 'if(variableValue > 10):'}], [{'code_type': 'generic_code', 'indentation_level': 12, 'code_line': 'print("Level 1.0-1 of loop.")'}], [{'code_type': 'generic_code', 'indentation_level': 12, 'code_line': 'print("Level 1.0-2 of loop.")'}], [{'code_type': 'generic_code', 'indentation_level': 12, 'code_line': 'print("Level 1.0-3 of loop.")'}], [{'code_type': 'generic_code', 'indentation_level': 8, 'code_line': 'print("Level 1.1 of loop.")'}], [{'code_type': 'generic_code', 'indentation_level': 8, 'code_line': 'print("Level 1.2 of loop.")'}], [{'code_type': 'elif_condition', 'indentation_level': 4, 'code_line': 'elif(variableValue < 10):'}], [{'code_type': 'generic_code', 'indentation_level': 8, 'code_line': 'print("Level 2.0 of loop.")'}], [{'code_type': 'else_condition', 'indentation_level': 4, 'code_line': 'else:'}], [{'code_type': 'generic_code', 'indentation_level': 8, 'code_line': 'print("Level 3.0 of loop.")'}], [{'code_type': 'generic_code', 'indentation_level': 8, 'code_line': 'print("Level 3.1 of loop.")'}], [{'code_type': 'generic_code', 'indentation_level': 8, 'code_line': 'print("Level 3.2 of loop.")'}], [{'code_type': 'generic_code', 'indentation_level': 4, 'code_line': 'print("Goodbye.")'}]]}
+IF_CONDITION_NODE_LABEL = 'Conditional node'
 
 def create_uuid_values(required_number):
     regex_pattern = '[-0-9]'
@@ -24,6 +26,8 @@ def create_uuid_values(required_number):
     return used_uuid_values
 
 def generate(function_codes):
+    function_dot_codes = {}
+
     for function_name in function_codes:
         function_content = function_codes[function_name]
         generated_uuid_values = create_uuid_values(len(function_content))
@@ -49,17 +53,17 @@ def generate(function_codes):
 
              # Adding the last code lines of each intended block
             if current_indentation_level < previous_indentation_level:
-                ending_node_uuid_stack.append(previous_block_uuid)
+                ending_node_uuid_stack[len(ending_node_uuid_stack) - 1].append(previous_block_uuid)
 
             # Handling the cases where the flow would need to branch out (initial branch)
-            if (current_code_type in [IF_CONDITION]):
+            if (current_code_type in STARTING_CONDITIONAL_STATEMENTS):
                 function_dot_code.node(generated_uuid_values[used_uuid_count], IF_CONDITION_NODE_LABEL)
 
                 indentation_level_stack.append(current_indentation_level)
                 code_line_stack.append(current_code_line)
                 branching_node_uuid_stack.append(generated_uuid_values[used_uuid_count])
                 # This node needs to be appened in cases where there isn't a terminating condition
-                ending_node_uuid_stack.append(generated_uuid_values[used_uuid_count])
+                ending_node_uuid_stack.append([generated_uuid_values[used_uuid_count]])
 
                 # Handling the first node of the flow
                 if used_uuid_count != 0:
@@ -67,8 +71,13 @@ def generate(function_codes):
                 previous_block_uuid = generated_uuid_values[used_uuid_count]
                 used_uuid_count += 1
             # Handling the cases where the flow would need to branch out (after the initial branch)
-            elif (current_code_type in [ELIF_CONDITION, ELSE_CONDITION]):
+            elif (current_code_type in INTERMEDIATE_CONDITIONAL_STATEMENTS):
                 code_line_stack.append(current_code_line)
+            # Handling the cases where the flow would be ending (terminating branch)
+            elif (current_code_type in TERMINATING_CONDITIONAL_STATEMENTS):
+                code_line_stack.append(current_code_line)
+                # Removing the initial conditional block from all ending connections
+                ending_node_uuid_stack[len(ending_node_uuid_stack) - 1].remove(branching_node_uuid_stack[len(branching_node_uuid_stack) - 1])
             else:
                 function_dot_code.node(generated_uuid_values[used_uuid_count], current_code_line)
 
@@ -77,17 +86,17 @@ def generate(function_codes):
                     # Handling the first edge after a special code line (start of indentation)
                     if len(code_line_stack) != 0:
                         function_dot_code.edge(branching_node_uuid_stack[len(branching_node_uuid_stack) - 1], generated_uuid_values[used_uuid_count], label = code_line_stack.pop(), style = 'dashed')
-                        # if previous_code_type == ELSE_CONDITION:
-                            # print(current_code_line)
                     else:
                         # Handling the first code line after code block (for alternate branching)
                         if current_indentation_level < previous_indentation_level:
                             # Removing the previous branching node as the code block is complete
                             branching_node_uuid_stack.pop()
-                            print(current_code_line, ending_node_uuid_stack)
-                            total_required_edges = len(ending_node_uuid_stack)
-                            for interation in range(total_required_edges):
-                                function_dot_code.edge(ending_node_uuid_stack.pop(), generated_uuid_values[used_uuid_count], style = 'dashed')
+                            total_required_edges = len(ending_node_uuid_stack[len(ending_node_uuid_stack) - 1])
+
+                            for iteration in range(total_required_edges):
+                                function_dot_code.edge(ending_node_uuid_stack[len(ending_node_uuid_stack) - 1].pop(), generated_uuid_values[used_uuid_count], style = 'dashed')
+                            # Deleting the innermost empty array of code block
+                            del ending_node_uuid_stack[len(ending_node_uuid_stack) - 1]
                         else:
                             function_dot_code.edge(previous_block_uuid, generated_uuid_values[used_uuid_count])
                 previous_block_uuid = generated_uuid_values[used_uuid_count]
@@ -96,5 +105,5 @@ def generate(function_codes):
             previous_code_line = current_code_line
             previous_indentation_level = current_indentation_level
             previous_code_type = current_code_type
-        print(function_dot_code)
-generate(function_codes)
+        function_dot_codes[function_name] = function_dot_code
+    return function_dot_codes
