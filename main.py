@@ -5,7 +5,7 @@ from code_parser import parse_code
 from flowchart_generator import generate
 
 def main():
-    file_name = "sample_codes/example_2.py"
+    file_name = "sample_codes/example_1.py"
     file_object = open(file_name, 'r')
     logging.info("The file '%s' was opened and successfully read.", file_name)
 
