@@ -1,4 +1,4 @@
-from code_parser import IF_CONDITION, ELIF_CONDITION, ELSE_CONDITION
+from .code_parser import IF_CONDITION, ELIF_CONDITION, ELSE_CONDITION
 
 from graphviz import Digraph
 from string import digits
