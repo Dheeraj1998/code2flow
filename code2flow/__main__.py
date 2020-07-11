@@ -1,5 +1,5 @@
-import flowfromcode
-from flowfromcode import flowchart_generator
+import code2flow
+from code2flow import flowchart_generator
 
 import sys
 
