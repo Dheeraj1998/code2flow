@@ -5,8 +5,12 @@ from .code_parser import parse_code
 from .dot_code_generator import generate
 
 def read_source_code(file_name):
-    #file_name = "sample_codes/example_1.py"
-    file_object = open(file_name, 'r')
+    try:
+        file_object = open(file_name, 'r')
+    except:
+        print("The file '%s' was not found at the required location." % file_name)
+        print("")
+        exit()
     logging.info("The file '%s' was opened and successfully read.", file_name)
 
     file_contents = []

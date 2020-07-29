@@ -6,8 +6,8 @@ readme_file = (current_directory / "README.md").read_text()
 
 setup(
     name="code2flow",
-    version="1.0.1",
-    description="A python project to allow generation of flow charts from a given code file.",
+    version="1.1.0",
+    description="A python module / CLI command to create flow charts from python code.",
     long_description=readme_file,
     long_description_content_type="text/markdown",
     url="https://github.com/Dheeraj1998/code2flow",
